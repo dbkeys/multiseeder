@@ -772,6 +772,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	
     move(4,50); printw("%s",c);	// Date & Time
     move(4,72); printw("Total DNS  Requests: ----------  Threads: ---------- ");
+    move(32,2); printw("Status:"); 
 
 	/////////////////////////
 	// Rows for each coin here:
@@ -1214,7 +1215,9 @@ extern "C" void* MainThread(void* arg) {
 
     ///printf("done\n");
   }else{
-	  printf("db not loaded!\n\r");
+	  move(32,10);				// move(y,x)
+	  printw("%s, db not loaded!",coinNames[MainThreadNumber]);
+	  //printf("db not loaded!\n\r");
 	  //exit(1);
   }
   
