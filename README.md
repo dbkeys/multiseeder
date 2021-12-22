@@ -284,3 +284,10 @@ Once configured correctly, it is recommended to set up a cron job that will auto
 
 ---
 Need more help? Read the [DNS Seeder Setup Guide](/SETUP.md)
+
+
+Compilation
+
+Requirements
+ apt-get install libboost-all-dev
+ apt install libcurl4-openssl-dev libconfig++-dev
