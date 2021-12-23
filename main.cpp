@@ -16,6 +16,7 @@
 #include "bitcoin.h"
 #include "db.h"
 
+#include <fstream>
 #include <dirent.h> 
 #include <filesystem>
 //using namespace std::filesystem;
@@ -414,6 +415,9 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
   CDnsThread *thread = (CDnsThread*)data;
 
   //printf("requestedHostname: %s %s\n\r", requestedHostname, thread->dns_opt.host);
+  ofstream logger;
+  logger.open("/var/log/multiseeder.log", std::ios_base::app);
+  logger << "queryline; " << (thread->dbQueries+1) << "; " << requestedHostname << endl;
 
   uint64_t requestedFlags = 0;
   int hostlen = strlen(requestedHostname);
@@ -449,8 +453,22 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
     addr[i] = thisflag.cache[j];
     thisflag.cache[j] = thisflag.cache[i];
     thisflag.cache[i] = addr[i];
+        if(addr[i].v == 4){
+                logger << "v4";
+                for (int byte = 0; byte < 4; byte++)
+                        logger << "." << (int)addr[i].data.v4[byte];
+                logger << "; ";
+        }
+        else if (addr[i].v == 6) {
+                logger << "v4";
+                for (int byte = 0; byte < 16; byte++)
+                        logger << "." << (int)addr[i].data.v6[byte];
+                logger << "; ";
+        }
     i++;
   }
+  logger << endl;
+  logger.close();
   return max;
 }
 
@@ -1393,7 +1411,7 @@ int main(int argc, char **argv) {
 		  configPaths[i]->append(dir->d_name);
 		  configPaths[i]->append("/settings.conf");
 		  // printf("%s\n\r", configPaths[i]->c_str());
-		  // Ticker symbols are extracted fomr /usr/local/sDNS.<TICK> directories 
+		  // Ticker symbols are extracted from /usr/local/sDNS.<TICK> directories 
 		  coinNames[i] = new string((char*)&(dir->d_name[5]));//ignore the first 5 character including the '.'
 		  i++;
 	  }
