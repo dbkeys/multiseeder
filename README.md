@@ -285,9 +285,11 @@ Once configured correctly, it is recommended to set up a cron job that will auto
 ---
 Need more help? Read the [DNS Seeder Setup Guide](/SETUP.md)
 
----
-Compilation Requirements
+------------------------------------------------------------------------------------------------------------------------
+Compilation / Installation
 
- apt install libboost-all-dev
- apt install libcurl4-openssl-dev libconfig++-dev
- apt install ncurses-dev ncurses-doc
+	Requirements - Libraries / Packages
+
+		apt-get install libboost-all-dev
+		apt install libcurl4-openssl-dev libconfig++-dev
+		apt install   ncurses-dev libncurses-dev libncurses5-dev libncursesw5-dev ncurses-doc
