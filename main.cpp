@@ -30,7 +30,7 @@ using namespace libconfig;
 
 // [Major].[Minor].[Patch].[Build].[letter]
 // [0].[1].[1].[0].[c]
-const char* dnsseeder_version = "0.1.1.0.c.multi\0x0";
+const char* dnsseeder_version = "0.1.1.0.j.multi\0x0";
 
 
 #define SEEDER_COUNT 10
