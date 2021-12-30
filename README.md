@@ -293,3 +293,10 @@ Compilation / Installation
 		apt-get install libboost-all-dev
 		apt install libcurl4-openssl-dev libconfig++-dev
 		apt install   ncurses-dev libncurses-dev libncurses5-dev libncursesw5-dev ncurses-doc
+
+If you get this error:
+	main.cpp:21:10: fatal error: filesystem: No such file or directory
+ 	#include <filesystem>
+
+# https://stackoverflow.com/questions/39231363/fatal-error-filesystem-no-such-file-or-directory
+It seems you have to include <filesystem> like this: #include <experimental/filesystem>. 
