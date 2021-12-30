@@ -27,11 +27,14 @@
 #define INVALID_SOCKET      (SOCKET)(~0)
 #define SOCKET_ERROR        -1
 
+
+extern pthread_rwlock_t mutex;
+
 // Wrapper to automatically initialize mutex
 class CCriticalSection
 {
 protected:
-    pthread_rwlock_t mutex;
+    //pthread_rwlock_t mutex;
 public:
     explicit CCriticalSection() { pthread_rwlock_init(&mutex, NULL); }
     ~CCriticalSection() { pthread_rwlock_destroy(&mutex); }

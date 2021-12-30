@@ -31,7 +31,7 @@
 
 #include <vector>
 using namespace std;
-
+extern int actualMainThreadCount;
 extern vector<CDnsThread*> dnsThread[SEEDER_COUNT];
 extern const char *host[SEEDER_COUNT];
 extern int TempMainThreadNumber;
@@ -337,7 +337,7 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
   */
 	
   bool found = false;
-  for(int i=0; i<SEEDER_COUNT && found == false; i++){
+  for(int i=0; i<actualMainThreadCount && found == false; i++){
 	int hostl = strlen(host[i]);
 	if (!(strcasecmp(name, host[i]) && (namel<hostl+2 || name[namel-hostl-1]!='.' 
 	 || strcasecmp(name+namel-hostl,host[i])))){

@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <pthread.h>
+
 #include "db.h"
 #include "netbase.h"
 #include "protocol.h"
@@ -10,8 +12,9 @@
 
 using namespace std;
 
+extern pthread_mutex_t mutex_mainthreadnumber;
 
-extern int TempMainThreadNumber;
+//extern int TempMainThreadNumber;
 
 class CNode {
   SOCKET sock;
@@ -75,7 +78,7 @@ class CNode {
     }
   }
  
-  void PushVersion() {
+  void PushVersion(int _TempMainThreadNumber) {
     int64 nTime = time(NULL);
     uint64 nLocalNonce = BITCOIN_SEED_NONCE;
     int64 nLocalServices = 0;
@@ -84,7 +87,7 @@ class CNode {
     string ver = "/" + sAppName + "/";
     uint8_t fRelayTxs = 0;
 	//printf("nCurrentBlock[TempMainThreadNumber]:%d\n", nCurrentBlock[TempMainThreadNumber]);
-    vSend << cfg_protocol_version[TempMainThreadNumber] << nLocalServices << nTime << you << me << nLocalNonce << ver << nCurrentBlock[TempMainThreadNumber] << fRelayTxs;
+    vSend << cfg_protocol_version[_TempMainThreadNumber] << nLocalServices << nTime << you << me << nLocalNonce << ver << nCurrentBlock[_TempMainThreadNumber] << fRelayTxs;
     EndMessage();
   }
  
@@ -99,7 +102,7 @@ class CNode {
     }
   }
 
-  bool ProcessMessage(string strCommand, CDataStream& vRecv) {
+  bool ProcessMessage(int _TempMainThreadNumber, string strCommand, CDataStream& vRecv) {
 //    printf("%s: RECV %s\n", ToString(you).c_str(), strCommand.c_str());
     if (strCommand == "version") {
       int64 nTime;
@@ -116,12 +119,12 @@ class CNode {
       // Change version
       BeginMessage("verack");
       EndMessage();
-      vSend.SetVersion(min(nVersion, cfg_protocol_version[TempMainThreadNumber]));
+      vSend.SetVersion(min(nVersion, cfg_protocol_version[_TempMainThreadNumber]));
       return false;
     }
     
     if (strCommand == "verack") {
-      this->vRecv.SetVersion(min(nVersion, cfg_protocol_version[TempMainThreadNumber]));
+      this->vRecv.SetVersion(min(nVersion, cfg_protocol_version[_TempMainThreadNumber]));
       GotVersion();
       return false;
     }
@@ -152,60 +155,77 @@ class CNode {
     return false;
   }
   
-  bool ProcessMessages() {
+  bool ProcessMessages(int _TempMainThreadNumber) {
     if (vRecv.empty()) return false;
     do {
-      CDataStream::iterator pstart = search(vRecv.begin(), vRecv.end(), BEGIN(cfg_message_start[TempMainThreadNumber]), END(cfg_message_start[TempMainThreadNumber]));
+        pthread_mutex_lock(&mutex_mainthreadnumber);
+        TempMainThreadNumber = _TempMainThreadNumber;
+      
+      CDataStream::iterator pstart = search(vRecv.begin(), vRecv.end(), BEGIN(cfg_message_start[_TempMainThreadNumber]), END(cfg_message_start[_TempMainThreadNumber]));
       int nHeaderSize = vRecv.GetSerializeSize(CMessageHeader());
       if (vRecv.end() - pstart < nHeaderSize) {
         if (vRecv.size() > nHeaderSize) {
           vRecv.erase(vRecv.begin(), vRecv.end() - nHeaderSize);
         }
+        pthread_mutex_unlock(&mutex_mainthreadnumber);
         break;
       }
       vRecv.erase(vRecv.begin(), pstart);
       vector<char> vHeaderSave(vRecv.begin(), vRecv.begin() + nHeaderSize);
+      TempMainThreadNumber = _TempMainThreadNumber;
       CMessageHeader hdr;
       vRecv >> hdr;
       if (!hdr.IsValid()) { 
         // printf("%s: BAD (invalid header)\n", ToString(you).c_str());
-        ban = 100000; return true;
+        ban = 100000; 
+
+        pthread_mutex_unlock(&mutex_mainthreadnumber); 
+        return true;
       }
       string strCommand = hdr.GetCommand();
       unsigned int nMessageSize = hdr.nMessageSize;
       if (nMessageSize > MAX_SIZE) { 
         // printf("%s: BAD (message too large)\n", ToString(you).c_str());
         ban = 100000;
+        pthread_mutex_unlock(&mutex_mainthreadnumber);
         return true; 
       }
       if (nMessageSize > vRecv.size()) {
         vRecv.insert(vRecv.begin(), vHeaderSave.begin(), vHeaderSave.end());
+        pthread_mutex_unlock(&mutex_mainthreadnumber);
         break;
       }
       // Checksum
       uint256 hash = Hash(vRecv.begin(), vRecv.begin() + nMessageSize);
       unsigned int nChecksum = 0;
       memcpy(&nChecksum, &hash, sizeof(nChecksum));
-      if (nChecksum != hdr.nChecksum) continue;
+      if (nChecksum != hdr.nChecksum) {
+
+          pthread_mutex_unlock(&mutex_mainthreadnumber);
+          continue;
+      }
 
       CDataStream vMsg(vRecv.begin(), vRecv.begin() + nMessageSize, vRecv.nType, vRecv.nVersion);
       vRecv.ignore(nMessageSize);
-      if (ProcessMessage(strCommand, vMsg))
+      if (ProcessMessage(_TempMainThreadNumber, strCommand, vMsg)){
+          pthread_mutex_unlock(&mutex_mainthreadnumber);
         return true;
+      }
+      pthread_mutex_unlock(&mutex_mainthreadnumber);
 //      printf("%s: done processing %s\n", ToString(you).c_str(), strCommand.c_str());
     } while(1);
     return false;
   }
   
 public:
-  CNode(const CService& ip, vector<CAddress>* vAddrIn) : you(ip), nHeaderStart(-1), nMessageStart(-1), vAddr(vAddrIn), ban(0), doneAfter(0), nVersion(0) {
+  CNode(int _TempMainThreadNumber, const CService& ip, vector<CAddress>* vAddrIn) : you(ip), nHeaderStart(-1), nMessageStart(-1), vAddr(vAddrIn), ban(0), doneAfter(0), nVersion(0) {
     vSend.SetType(SER_NETWORK);
-    vSend.SetVersion(cfg_init_proto_version[TempMainThreadNumber]);
+    vSend.SetVersion(cfg_init_proto_version[_TempMainThreadNumber]);
     vRecv.SetType(SER_NETWORK);
-    vRecv.SetVersion(cfg_init_proto_version[TempMainThreadNumber]);
+    vRecv.SetVersion(cfg_init_proto_version[_TempMainThreadNumber]);
 	//printf("cfg_init_proto_version[TempMainThreadNumber]:%d\n", cfg_init_proto_version[TempMainThreadNumber]);
   }
-  bool Run() {
+  bool Run(int _TempMainThreadNumber) {
     bool res = true;
     if (!ConnectSocket(you, sock)){                                             
 		//printf("bitcoin.cpp Run socket cant connect\n");                    
@@ -213,10 +233,17 @@ public:
 	}else{
 		//printf("bitcoin.cpp Run socket CAN connect\n"); 
 	}
-    PushVersion();
+
+    pthread_mutex_lock(&mutex_mainthreadnumber);
+    TempMainThreadNumber = _TempMainThreadNumber;
+    PushVersion(_TempMainThreadNumber);
     Send();
+    pthread_mutex_unlock(&mutex_mainthreadnumber);
+
     int64 now;
 	//Sleep(1000);
+    now = time(NULL);
+    //printf("doneAfter (%lld)-now: %lld\n", doneAfter, (doneAfter - now));
     while (now = time(NULL), ban == 0 && (doneAfter == 0 || doneAfter > now) && sock != INVALID_SOCKET) {
       char pchBuf[0x10000];
       fd_set read_set, except_set;
@@ -239,6 +266,10 @@ public:
         break;
       }
       int nBytes = recv(sock, pchBuf, sizeof(pchBuf), 0);
+
+
+      pthread_mutex_lock(&mutex_mainthreadnumber);
+      TempMainThreadNumber = _TempMainThreadNumber;
       int nPos = vRecv.size();
       if (nBytes > 0) {
         vRecv.resize(nPos + nBytes);
@@ -246,14 +277,23 @@ public:
       } else if (nBytes == 0) {
          //printf("%s: BAD (connection closed prematurely)\n", ToString(you).c_str());
         res = false;
+        pthread_mutex_unlock(&mutex_mainthreadnumber);
         break;
       } else {
          //printf("%s: BAD (connection error)\n", ToString(you).c_str());
         res = false;
+        pthread_mutex_unlock(&mutex_mainthreadnumber);
         break;
       }
-      ProcessMessages();
+      pthread_mutex_unlock(&mutex_mainthreadnumber);
+
+
+      ProcessMessages(_TempMainThreadNumber);// mutexed already
+
+      pthread_mutex_lock(&mutex_mainthreadnumber);
+      TempMainThreadNumber = _TempMainThreadNumber;
       Send();
+      pthread_mutex_unlock(&mutex_mainthreadnumber);
     }
     if (sock == INVALID_SOCKET){ res = false;printf("bitcoincpp sock == INVALID_SOCKET\n");}
     close(sock);
@@ -282,10 +322,10 @@ public:
   }
 };
 
-bool TestNode(const CService &cip, int &ban, int &clientV, std::string &clientSV, int &blocks, bool &insync, vector<CAddress>* vAddr, uint64_t& services) {
+bool TestNode(int _TempMainThreadNumber, const CService &cip, int &ban, int &clientV, std::string &clientSV, int &blocks, bool &insync, vector<CAddress>* vAddr, uint64_t& services) {
   try {
-    CNode node(cip, vAddr);
-    bool ret = node.Run();
+    CNode node(_TempMainThreadNumber, cip, vAddr);
+    bool ret = node.Run(_TempMainThreadNumber);
     if (!ret)
 		ban = node.GetBan();
 	else
@@ -293,10 +333,10 @@ bool TestNode(const CService &cip, int &ban, int &clientV, std::string &clientSV
     clientV = node.GetClientVersion();
     clientSV = node.GetClientSubVersion();
     blocks = node.GetStartingHeight();
-    if (bCurrentBlockFromExplorer[TempMainThreadNumber])
-      insync = (blocks >= nCurrentBlock[TempMainThreadNumber]-5 && blocks <= nCurrentBlock[TempMainThreadNumber]+5);
+    if (bCurrentBlockFromExplorer[_TempMainThreadNumber])
+      insync = (blocks >= nCurrentBlock[_TempMainThreadNumber]-5 && blocks <= nCurrentBlock[_TempMainThreadNumber]+5);
     else
-      insync = (blocks >= nCurrentBlock[TempMainThreadNumber]);
+      insync = (blocks >= nCurrentBlock[_TempMainThreadNumber]);
     services = node.GetServices();
 //  printf("%s: %s!!!\n", cip.ToString().c_str(), ret ? "GOOD" : "BAD");
     return ret;

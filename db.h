@@ -20,7 +20,7 @@ extern int TempMainThreadNumber;
 
 
 extern bool bCurrentBlockFromExplorer[SEEDER_COUNT];
-extern int nCurrentBlock[SEEDER_COUNT];
+extern long long int nCurrentBlock[SEEDER_COUNT];
 extern int cfg_protocol_version[SEEDER_COUNT];
 extern int cfg_init_proto_version[SEEDER_COUNT];
 extern int cfg_min_peer_proto_version[SEEDER_COUNT];

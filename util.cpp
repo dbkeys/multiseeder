@@ -3,6 +3,8 @@
 
 using namespace std;
 
+pthread_rwlock_t mutex;
+
 string vstrprintf(const std::string &format, va_list ap)
 {
     char buffer[50000];

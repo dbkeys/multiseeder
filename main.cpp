@@ -57,8 +57,8 @@ string sAppName = "generic-seeder";
 string sAppVersion = "1.1.0";
 string sForceIP;
 string sCurrentBlock[SEEDER_COUNT]= {"","","",""};
-int nCurrentBlock[SEEDER_COUNT] = {-1,};
-int nMaxBlockHeight[SEEDER_COUNT]={0,};
+long long int nCurrentBlock[SEEDER_COUNT] = {-1,};
+long long int nMaxBlockHeight[SEEDER_COUNT]={0,};
 int nDefaultBlockHeight[SEEDER_COUNT] = {-1};
 
 string	cfg_blockchain_name[SEEDER_COUNT]= {"","","",""};
@@ -280,11 +280,13 @@ extern "C" void* ThreadCrawler(void* data) {
 			Sleep(1000);
 		  continue;
 	  }*/
-	  //pthread_mutex_lock(&mutex_mainthreadnumberCrawlerTestNode);
-	  
+
+	pthread_mutex_lock(&mutex_mainthreadnumber);
+    TempMainThreadNumber = tArgs.MainThreadNumber;
     std::vector<CServiceResult> ips;
     int wait = 5;
     db[tArgs.MainThreadNumber].GetMany(ips, 16, wait);
+    pthread_mutex_unlock(&mutex_mainthreadnumber);
 	
 	  //pthread_mutex_unlock(&mutex_mainthreadnumberCrawlerTestNode);
 	  
@@ -296,10 +298,20 @@ extern "C" void* ThreadCrawler(void* data) {
 	  //pthread_mutex_unlock(&mutex_mainthreadnumberCrawlerTestNode);
       continue;
     }
+
+    pthread_mutex_lock(&mutex_mainthreadnumber);
+    TempMainThreadNumber = tArgs.MainThreadNumber;
     vector<CAddress> addr;
+    pthread_mutex_unlock(&mutex_mainthreadnumber);
+    
 	//printf("|\n");
     for (int i=0; i<ips.size(); i++) {
+
+      pthread_mutex_lock(&mutex_mainthreadnumber);
+      TempMainThreadNumber = tArgs.MainThreadNumber;
       CServiceResult &res = ips[i];
+      pthread_mutex_unlock(&mutex_mainthreadnumber);
+
       res.nBanTime = 0;
       res.nClientV = 0;
       res.nHeight = 0;
@@ -308,17 +320,18 @@ extern "C" void* ThreadCrawler(void* data) {
       res.services = 0;
       bool getaddr = res.ourLastSuccess + 86400 < now;
 	//printf("_\n");
-	  pthread_mutex_lock(&mutex_mainthreadnumber);
+	  //pthread_mutex_lock(&mutex_mainthreadnumber);
 	  TempMainThreadNumber=tArgs.MainThreadNumber;
-      res.fGood = TestNode(res.service,res.nBanTime,res.nClientV,res.strClientV,res.nHeight,res.bInSync,getaddr ? &addr : NULL, res.services);
+      res.fGood = TestNode(tArgs.MainThreadNumber, res.service,res.nBanTime,res.nClientV,res.strClientV,res.nHeight,res.bInSync,getaddr ? &addr : NULL, res.services);
       //printf("fGood:%d %d.%d.%d.%d\n", res.fGood, res.service.ip[0],res.service.ip[1],res.service.ip[2],res.service.ip[3]);
-	  pthread_mutex_unlock(&mutex_mainthreadnumber);
+	  //pthread_mutex_unlock(&mutex_mainthreadnumber);
     }
 	
-	  //pthread_mutex_lock(&mutex_mainthreadnumberCrawlerTestNode);
-      
+	  pthread_mutex_lock(&mutex_mainthreadnumber);
+      TempMainThreadNumber = tArgs.MainThreadNumber;
 	  db[tArgs.MainThreadNumber].ResultMany(ips);
       db[tArgs.MainThreadNumber].Add(addr);
+      pthread_mutex_unlock(&mutex_mainthreadnumber);
 	
 	
 	  //pthread_mutex_unlock(&mutex_mainthreadnumberCrawlerTestNode);
@@ -417,7 +430,8 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
   //printf("requestedHostname: %s %s\n\r", requestedHostname, thread->dns_opt.host);
   ofstream logger;
   logger.open("/var/log/multiseeder.log", std::ios_base::app);
-  logger << "queryline; " << (thread->dbQueries+1) << "; " << requestedHostname << endl;
+  logger << (thread->dbQueries+1) << ": " << requestedHostname << "  ";
+  //logger << "queryline; " << (thread->dbQueries+1) << "; " << requestedHostname << endl;
 
   uint64_t requestedFlags = 0;
   int hostlen = strlen(requestedHostname);
@@ -454,16 +468,20 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
     thisflag.cache[j] = thisflag.cache[i];
     thisflag.cache[i] = addr[i];
         if(addr[i].v == 4){
-                logger << "v4";
-                for (int byte = 0; byte < 4; byte++)
+                //logger << "v4 ";
+                logger << (int)addr[i].data.v4[0];
+                for (int byte = 1; byte < 4; byte++)
                         logger << "." << (int)addr[i].data.v4[byte];
                 logger << "; ";
+                //logger << "; " << endl;
         }
         else if (addr[i].v == 6) {
-                logger << "v4";
-                for (int byte = 0; byte < 16; byte++)
+                ///logger << "v6 ";
+                logger << (int)addr[i].data.v6[0];
+                for (int byte = 1; byte < 16; byte++)
                         logger << "." << (int)addr[i].data.v6[byte];
                 logger << "; ";
+                //logger << "; " << endl;
         }
     i++;
   }
@@ -544,27 +562,27 @@ size_t writeCallback(char* buf, size_t size, size_t nmemb, void* up) {
     return size*nmemb; //tell curl how many bytes we handled
 }
 
-int readBlockHeightFromExplorer(string sExplorerURL) {
-    int nReturn = -1;
+long long int readBlockHeightFromExplorer(string sExplorerURL, int __TempMainThreadNumber) {
+    long long  nReturn = -1;
 
-    sCurrentBlock[TempMainThreadNumber] = "";
+    sCurrentBlock[__TempMainThreadNumber] = "";
     CURL* curl;
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, sExplorerURL.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &TempMainThreadNumber);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &__TempMainThreadNumber);
     curl_easy_perform(curl);
     curl_easy_cleanup(curl);
     curl_global_cleanup();
 
-    if (!sCurrentBlock[TempMainThreadNumber].empty() && sCurrentBlock[TempMainThreadNumber][0] != 0 && is_numeric(&(sCurrentBlock[TempMainThreadNumber][0u]))) {
+    if (!sCurrentBlock[__TempMainThreadNumber].empty() && sCurrentBlock[__TempMainThreadNumber][0] != 0 && is_numeric(&(sCurrentBlock[__TempMainThreadNumber][0u]))) {
         // Block height from explorer was read successfully
 		try{
-			nReturn = std::stoi(sCurrentBlock[TempMainThreadNumber]);
+			nReturn = std::stoll(sCurrentBlock[__TempMainThreadNumber]);
 			//printf("nReturn:%d\n", nReturn);
 		}catch(...){
-			printf("stoi exc. sCurrentBlock: %s\n", sCurrentBlock[TempMainThreadNumber].c_str());
+			printf("stoi exc. sCurrentBlock: %s\n", sCurrentBlock[__TempMainThreadNumber].c_str());
 		}
     }
 
@@ -595,11 +613,11 @@ extern "C" void* ThreadBlockReader(void* _MainThreadNumber) {
 			}*/
 			pthread_mutex_lock(&mutex_mainthreadnumber);
 			
-			TempMainThreadNumber = MainThreadNumber;
+			//TempMainThreadNumber = MainThreadNumber;
 			// Read from block explorer 1
 			
-			int returnedBlockForFindingMax = 0;
-			int nReturnBlock = readBlockHeightFromExplorer(cfg_explorer_url[MainThreadNumber]);
+            long long int returnedBlockForFindingMax = 0;
+            long long int nReturnBlock = readBlockHeightFromExplorer(cfg_explorer_url[MainThreadNumber], MainThreadNumber);
 			returnedBlockForFindingMax = nReturnBlock;
 
 			if (nReturnBlock == -1 || nReturnBlock == nCurrentBlock[MainThreadNumber]) {
@@ -607,9 +625,9 @@ extern "C" void* ThreadBlockReader(void* _MainThreadNumber) {
 				// Check if block explorer 2 is set
 				if (cfg_explorer_url2[MainThreadNumber].compare("")) {
 					// Save the value from explorer 1
-					int nReturnBlockSave = nReturnBlock;
+                    long long int nReturnBlockSave = nReturnBlock;
 					// Read from block explorer 2
-					nReturnBlock = readBlockHeightFromExplorer(cfg_explorer_url2[MainThreadNumber]);
+					nReturnBlock = readBlockHeightFromExplorer(cfg_explorer_url2[MainThreadNumber], MainThreadNumber);
 					
 					returnedBlockForFindingMax = nReturnBlock;
 
@@ -643,7 +661,7 @@ extern "C" void* ThreadBlockReader(void* _MainThreadNumber) {
 			pthread_mutex_unlock(&mutex_mainthreadnumber);
 			
 				
-			Sleep(cfg_explorer_requery_seconds[MainThreadNumber] * 10/*00 decreased */);
+			Sleep(cfg_explorer_requery_seconds[MainThreadNumber] * 1000);
 		} while(1);
 	} else {
 		// No block explorers are set so default to getting the hardcoded block height
@@ -858,7 +876,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 		move(22+MainThreadNumber,87); 				// Default Acceptable BlockHeight
 		printw("%d", nDefaultBlockHeight[MainThreadNumber]);
 		move(22+MainThreadNumber,97);
-		printw("%d", nMaxBlockHeight[MainThreadNumber]); 	// Should be Highest BlockHeight Seen so far for this blockchain / coin
+		printw("%lld", nMaxBlockHeight[MainThreadNumber]); 	// Should be Highest BlockHeight Seen so far for this blockchain / coin
 
 		//cout << "Will accept nodes reporting blockheight at or above: " << nDefaultBlockHeight << endl;
 	/*} else {
