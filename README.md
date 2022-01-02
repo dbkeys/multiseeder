@@ -291,7 +291,7 @@ Compilation / Installation
 	Requirements - Libraries / Packages
 
 		apt-get install libboost-all-dev
-		apt install libcurl4-openssl-dev libconfig++-dev
+		apt install libcurl4-openssl-dev libconfig++-dev libssl-dev
 		apt install   ncurses-dev libncurses-dev libncurses5-dev libncursesw5-dev ncurses-doc
 
 If you get this error:
@@ -300,3 +300,5 @@ If you get this error:
 
 # https://stackoverflow.com/questions/39231363/fatal-error-filesystem-no-such-file-or-directory
 It seems you have to include <filesystem> like this: #include <experimental/filesystem>. 
+
+#https://unix.stackexchange.com/questions/87458/make-fatal-error-openssl-sha-h-no-such-file-or-directory
