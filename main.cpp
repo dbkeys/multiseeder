@@ -32,7 +32,7 @@ using namespace libconfig;
 
 // [Major].[Minor].[Patch].[Build].[letter]
 // [0].[1].[1].[0].[c]
-const char* dnsseeder_version = "0.1.1.0.j.multi\0x0";
+const char* dnsseeder_version = "0.1.1.0.jk.multi\0x0";
 
 
 #define SEEDER_COUNT 10
@@ -294,12 +294,15 @@ extern "C" void* ThreadCrawler(void* data) {
 	  
     int64 now = time(NULL);
     if (ips.empty()) {
+              //cout << "crawler" << now << endl;
       wait *= 1000;
       wait += rand() % (500 * tArgs.nThreads);
       Sleep(wait);
 	  //pthread_mutex_unlock(&mutex_mainthreadnumberCrawlerTestNode);
       continue;
     }
+
+    		//cout << "crawler 2****** " << now << endl;
 
     pthread_mutex_lock(&mutex_mainthreadnumber);
     TempMainThreadNumber = tArgs.MainThreadNumber;
@@ -1257,6 +1260,10 @@ extern "C" void* MainThread(void* arg) {
 	  printw("%s, db not loaded!",coinNames[MainThreadNumber]);
 	  //printf("db not loaded!\n\r");
 	  //exit(1);
+     if (opts.fWipeBan)
+	         db[MainThreadNumber].banned.clear();
+     if (opts.fWipeIgnore)
+	         db[MainThreadNumber].ResetIgnores();
   }
   
   pthread_mutex_unlock(&mutex_mainthreadnumber);
@@ -1443,6 +1450,12 @@ int main(int argc, char **argv) {
   pthread_t mainThread[SEEDER_COUNT];
   pthread_attr_t attr_main[SEEDER_COUNT];
   int MainThreadNumber[SEEDER_COUNT];
+    
+    pthread_t threadStats, threadSeed;
+    //printf("Starting seeder...");
+    pthread_create(&threadSeed, NULL, ThreadSeeder, /*&MainThreadNumber*/nullptr);
+
+
   for(int j=0; j<actualMainThreadCount; j++)
   {
 	  pthread_attr_init(&attr_main[j]);
@@ -1458,10 +1471,10 @@ int main(int argc, char **argv) {
   
   //below should run after main threads send sig pipe
   
-  pthread_t threadStats, threadSeed;
+//  pthread_t threadStats, threadSeed;
   pthread_create(&threadStats, NULL, ThreadStats, /*&MainThreadNumber*/nullptr);
   //printf("Starting seeder...");
-  pthread_create(&threadSeed, NULL, ThreadSeeder, /*&MainThreadNumber*/nullptr);
+//  pthread_create(&threadSeed, NULL, ThreadSeeder, /*&MainThreadNumber*/nullptr);
   
   for(int j=0; j<actualMainThreadCount; j++)
 	pthread_join(mainThread[j], &res);
