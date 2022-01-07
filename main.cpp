@@ -852,7 +852,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
     // printf("%s %i/%i available (%i tried in %is, %i new, %i active), %i banned; %llu DNS requests, %llu db queries", c, stats.nGood, stats.nAvail, stats.nTracked, stats.nAge, stats.nNew, stats.nAvail - stats.nTracked - stats.nNew, stats.nBanned, (unsigned long long)requests, (unsigned long long)queries);
     
 	
-	move(2,48);   printw("Multiple BlockChain   Node Tracker / DNS Seeder   Monitor    -    "); move(2,114);  printw("%s",dnsseeder_version);
+	move(2,43);   printw("Multiple BlockChain   Node Tracker / DNS Seeder   Monitor    -    "); move(2,114);  printw("%s",dnsseeder_version);
 	//move(2,48);   printw("Multiple BlockChain   Node Tracker / DNS Seeder   Monitor    -    v0.1.1.0.c\n");
 	move(5,144); printw("Threads");
 
@@ -867,9 +867,10 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	
 	
 	// Section 2, URL   & Block Height Status - Label Fields
-	move(19,87); printw("Block Height");
-	move(20,2);   printw("Coin   URL                                                                           Accept  < High Seen  Supported Whitelist Filters ");
-	move(21,2);   printw("-----  ----------------------------------------------------------------------------  --------- ---------  ----------------------------------------------------");
+	move(19,85); printw("Block Height");
+	move(20,2);   printw("Coin   URL                                                                           Accept               Supported Whitelist Filters ");
+	move(21,2);   printw("-----  ----------------------------------------------------------------------------  --------- ----------------------------------------------------");
+      //move(21,2);   printw("-----  ----------------------------------------------------------------------------  --------- ---------  ----------------------------------------------------");
 	
 	
 	// Section 2, URL   & Block Height Status - Update Rows
@@ -880,8 +881,10 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	/*if (cfg_explorer_url[MainThreadNumber].empty()) {*/
 		move(22+MainThreadNumber,87); 				// Default Acceptable BlockHeight
 		printw("%d", nDefaultBlockHeight[MainThreadNumber]);
-		move(22+MainThreadNumber,97);
-		printw("%lld", nMaxBlockHeight[MainThreadNumber]); 	// Should be Highest BlockHeight Seen so far for this blockchain / coin
+
+		// No appreciable difference ...., so remove "High Seen"
+		//move(22+MainThreadNumber,97);
+		//printw("%lld", nMaxBlockHeight[MainThreadNumber]); 	// Should be Highest BlockHeight Seen so far for this blockchain / coin
 
 		//cout << "Will accept nodes reporting blockheight at or above: " << nDefaultBlockHeight << endl;
 	/*} else {
@@ -890,7 +893,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 		//cout << "Will seek current blockheight info from: " << cfg_explorer_url << endl;
 	}*/
 	
-	  move(22,108);	// Supported White List Filters
+	  move(22,97);	// Supported White List Filters
 	  for (std::set<uint64_t>::const_iterator it = opts.filter_whitelist.begin(); it != opts.filter_whitelist.end(); it++) 
 	  {
 		  if (it != opts.filter_whitelist.begin()) {
