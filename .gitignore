@@ -2,4 +2,6 @@
 dnsseed*
 dnsstats.log
 multiseed
-multiseed.s
+multiseed.v*
+multiseed.*s
+

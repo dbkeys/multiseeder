@@ -822,8 +822,8 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	if(coinNames[MainThreadNumber]){
 		move(8+MainThreadNumber,2); printw("%s", coinNames[MainThreadNumber]->c_str());
 	}
-    move(8+MainThreadNumber,79);  printw("%i/%i", stats.nGood, stats.nAvail);			// Available
-    move(8+MainThreadNumber,89);  printw("%i", stats.nTracked);					// tried
+    move(8+MainThreadNumber,75);  printw("%i/%i", stats.nGood, stats.nAvail);			// Available
+    move(8+MainThreadNumber,87);  printw("%i", stats.nTracked);					// tried
     move(8+MainThreadNumber,95);  printw("%i", stats.nAge);					// in sec : Age
     move(8+MainThreadNumber,106); printw("%i", stats.nNew);					// new
     move(8+MainThreadNumber,113); printw("%i", stats.nAvail - stats.nTracked - stats.nNew);	// active ( is a computed figure )
@@ -841,7 +841,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 		printw("%s", 
 			string(ns[MainThreadNumber]).substr(0, 27).c_str()/*, nPort[MainThreadNumber]*/);
 		// IP served from	
-		move(8+MainThreadNumber,62);	 
+		move(8+MainThreadNumber,58);	 
 		printw("%s", 
 			string(ip_addr[MainThreadNumber]).substr(0, 15).c_str()/*, nPort[MainThreadNumber]*/);
 
@@ -858,8 +858,8 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 
 	// Section 1 - Label Fields
 	move(5,127); printw("DNS     db");
-	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name                 IP               Available tried in sec     new    Active Banned Request Queries DNS Crawl On");
-	move(7,2);   printw("-----  ------------------------ --------------------------- ---------------  --------- ----- ---------- ------ ------ ------ ------- ------- --- ----- --");
+	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name             IP               Available   tried   in sec     new    Active Banned Request Queries DNS Crawl On");
+	move(7,2);   printw("-----  ------------------------ ----------------------- ---------------  ----------- ------- ---------- ------ ------ ------ ------- ------- --- ----- --");
 					   
 	//move(7-1,89+25); printw("startd");
 	//move(7-1/*+2*MainThreadNumber*/,78+25); printw("DNS");
