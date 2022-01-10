@@ -276,6 +276,7 @@ static ssize_t set_error(unsigned char* outbuf, int error) {
 }
 
 /*
+ In MultiSeeder, host, ns and mport are not command line parameters, they are specified in /usr/local/sDNS.<coin>/settings.conf
 host, ns and mport are not obtain from opt any more. they are obtained from each thread's variable (within global arrays)
 */
 ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insize, unsigned char* outbuf) {
@@ -341,7 +342,7 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
 	int hostl = strlen(host[i]);
 	if (!(strcasecmp(name, host[i]) && (namel<hostl+2 || name[namel-hostl-1]!='.' 
 	 || strcasecmp(name+namel-hostl,host[i])))){
-		found = true;
+		found = true;			// DNS Query Request is MATCHED !
 		TempMainThreadNumber = i;
 	 }
   }
@@ -351,7 +352,7 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
 /*
 Multiple coin adaptation:
 
-re-assign opt pointer as we decided that which coin does the client request.
+re-assign opt pointer as we decided that which coin client query is requesting.
 */
 opt = (dns_opt_t*)dnsThread[TempMainThreadNumber][0];
 
@@ -414,7 +415,7 @@ opt = (dns_opt_t*)dnsThread[TempMainThreadNumber][0];
     if (!ret2) { outbuf[7]++; }
   }
   
-  // A/AAAA records
+  // A/AAAA records    Node IP List 
   if ((typ == TYPE_A || typ == TYPE_AAAA || typ == QTYPE_ANY) && (cls == CLASS_IN || cls == QCLASS_ANY)) {
     addr_t addr[32];
     int naddr = opt->cb((void*)opt, name, addr, 32, typ == TYPE_A || typ == QTYPE_ANY, typ == TYPE_AAAA || typ == QTYPE_ANY);
@@ -520,7 +521,7 @@ int dnsserver(dns_opt_t *opt) {
 //    printf("DNS: Request %llu from %i.%i.%i.%i:%i of %i bytes\n", (unsigned long long)(opt->nRequests), addr[0], addr[1], addr[2], addr[3], ntohs(si_other.sin_port), (int)insize);
     if (insize <= 0)
       continue;
-
+		// Handle DNS Query Request
     ssize_t ret = dnshandle(opt, inbuf, insize, outbuf);
     if (ret <= 0)
       continue;

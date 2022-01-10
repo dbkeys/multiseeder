@@ -39,6 +39,8 @@ const char* dnsseeder_version = "0.1.1.0.jk.multi\0x0";
 
 int actualMainThreadCount = 0;
 
+int  totalDNSpTh=0;
+
 int TempMainThreadNumber=0;
 bool fDNS[SEEDER_COUNT] = {true,};
 
@@ -412,7 +414,7 @@ public:
     dns_opt.mbox = mbox[mainThreadNumber];
     dns_opt.datattl = 3600;
     dns_opt.nsttl = 40000;
-    dns_opt.cb = GetIPList;
+    dns_opt.cb = GetIPList;	// List of Node IP's
     dns_opt.addr = ip_addr[mainThreadNumber];
     dns_opt.port = nPort[mainThreadNumber];
     dns_opt.nRequests = 0;
@@ -422,7 +424,7 @@ public:
   }
 
   void run() {
-	//while(1) // there's an infinite for loop alread within dnsserver func
+	//while(1) // there's an infinite for loop already within dnsserver func
 	dnsserver(&dns_opt);
   }
 };
@@ -757,6 +759,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	
   int MainThreadNumber = 0;//*(int*)_MainThreadNumber;
   bool first = true;
+  unsigned long long totalDNSReq=0;
   Sleep(3000);
   do {
 	  MainThreadNumber = (MainThreadNumber+1)%actualMainThreadCount;
@@ -812,7 +815,10 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	clrtoeol();          // clear line
 	
     move(4,50); printw("%s",c);	// Date & Time
-    move(4,72); printw("Total DNS  Requests: ----------  Threads: ---------- ");
+    //                  7       8         9        10        11        12
+    //                  2345678901234567890123456789012345678901234567890
+    //                                       1234568901           123
+    move(4,72); printw("Total DNS  Requests:             Threads:    ");
     move(32,2); printw("Status:"); 
 
 	/////////////////////////
@@ -822,14 +828,17 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	if(coinNames[MainThreadNumber]){
 		move(8+MainThreadNumber,2); printw("%s", coinNames[MainThreadNumber]->c_str());
 	}
-    move(8+MainThreadNumber,79);  printw("%i/%i", stats.nGood, stats.nAvail);			// Available
-    move(8+MainThreadNumber,89);  printw("%i", stats.nTracked);					// tried
+    move(8+MainThreadNumber,75);  printw("%i/%i", stats.nGood, stats.nAvail);			// Available
+    move(8+MainThreadNumber,87);  printw("%i", stats.nTracked);					// tried
     move(8+MainThreadNumber,95);  printw("%i", stats.nAge);					// in sec : Age
     move(8+MainThreadNumber,106); printw("%i", stats.nNew);					// new
-    move(8+MainThreadNumber,113); printw("%i", stats.nAvail - stats.nTracked - stats.nNew);	// active ( is a computed figure )
+    move(8+MainThreadNumber,113); printw("%i", stats.nAvail - stats.nTracked - stats.nNew);	// Active ( is a computed figure )
     move(8+MainThreadNumber,120); printw("%i", stats.nBanned);					// Banned
     move(8+MainThreadNumber,127); printw("%llu", (unsigned long long)requests);			// DNS Requests
     move(8+MainThreadNumber,135); printw("%llu", (unsigned long long)queries);			// db Queries
+
+    totalDNSReq+=(unsigned long long)requests;
+    move(4,93); printw("%d",totalDNSReq);
 
 	if (fDNS[MainThreadNumber]) {
 		// sub-Domain served
@@ -841,7 +850,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 		printw("%s", 
 			string(ns[MainThreadNumber]).substr(0, 27).c_str()/*, nPort[MainThreadNumber]*/);
 		// IP served from	
-		move(8+MainThreadNumber,62);	 
+		move(8+MainThreadNumber,58);	 
 		printw("%s", 
 			string(ip_addr[MainThreadNumber]).substr(0, 15).c_str()/*, nPort[MainThreadNumber]*/);
 
@@ -858,8 +867,8 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 
 	// Section 1 - Label Fields
 	move(5,127); printw("DNS     db");
-	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name                 IP               Available tried in sec     new    Active Banned Request Queries DNS Crawl On");
-	move(7,2);   printw("-----  ------------------------ --------------------------- ---------------  --------- ----- ---------- ------ ------ ------ ------- ------- --- ----- --");
+	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name             IP               Available   tried   in sec     new    Active Banned Request Queries DNS Crawl On");
+	move(7,2);   printw("-----  ------------------------ ----------------------- ---------------  ----------- ------- ---------- ------ ------ ------ ------- ------- --- ----- --");
 					   
 	//move(7-1,89+25); printw("startd");
 	//move(7-1/*+2*MainThreadNumber*/,78+25); printw("DNS");
@@ -1293,6 +1302,7 @@ extern "C" void* MainThread(void* arg) {
     dnsThread[MainThreadNumber].clear();
     for (int i=0; i<nDnsThreads[MainThreadNumber]; i++) {
       dnsThread[MainThreadNumber].push_back(new CDnsThread(&opts, i, MainThreadNumber));
+      totalDNSpTh++;
     }
 	for (int i=0; i<nDnsThreads[MainThreadNumber]; i++) {
       pthread_create(&threadDns[i], NULL, ThreadDNS, dnsThread[MainThreadNumber][i]);
@@ -1302,6 +1312,8 @@ extern "C" void* MainThread(void* arg) {
     /// TODO REMOVED move(11/*+2*MainThreadNumber*/,29); printw("startd");
     //printf("done\n");
   }
+  // Update number of total DNS Server threads
+  move(4,114); printw("%d",totalDNSpTh);
   
   //move(8+MainThreadNumber,95); printw("Y");
   //printf("done\n");
