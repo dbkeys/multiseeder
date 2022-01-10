@@ -1343,6 +1343,15 @@ extern "C" void* MainThread(void* arg) {
 
 
 int main(int argc, char **argv) {
+
+	// Record program start date/time, based on system time.
+        clock_t tic = clock();
+
+        uint32_t ut_now = time(NULL);
+        time_t t_start = time(0);
+        time_t t_now   = time(0);
+        char* pstime = ctime(&t_start);
+
 	for(int i=0; i<SEEDER_COUNT; i++)
 		seeds[i] = sSeeds[i];
 	
