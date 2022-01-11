@@ -31,7 +31,7 @@ using namespace libconfig;
 
 // [Major].[Minor].[Patch].[Build].[letter]
 // [0].[1].[1].[0].[c]
-const char* dnsseeder_version = "0.1.1.0.jk.multi\0x0";
+const char* dnsseeder_version = "0.1.1.0.multi\0x0";
 
 
 // Service a maximum of 10 blockchains
@@ -80,8 +80,8 @@ string sSeeds[SEEDER_COUNT][11];
 string *seeds[SEEDER_COUNT];// = sSeeds;
 
 clock_t run_start,run_now,tic,toc;
-double running_time;
-int run_days, run_hours, run_minutes, run_secs;
+double run_secs, running_time;
+int run_days, run_hours, run_minutes;
 
 class CDnsSeedOpts {
 public:
@@ -151,7 +151,6 @@ public:
         {0, 0, 0, 0}
       };
       int option_index = 0;
-      // Date & Time Display
       int c = getopt_long(argc, argv, "h:n:m:t:a:p:d:o:i:k:w:f:?", long_options, &option_index);
       if (c == -1) break;
       switch (c) {
@@ -819,16 +818,15 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
 	move(22+MainThreadNumber, 0);          // move to begining of line
 	clrtoeol();          // clear line
 	
-    move(2,128); printw("%s",c);	// Date & Time
-    //move(4,50); printw("%s",c);	// Date & Time
+    move(2,127); printw("%s",c);	// @@Date & Time
     // Running Time
-    toc = clock();
-    // https://www.techiedelight.com/find-execution-time-c-program/
     run_now = time(NULL);
-    // calculate elapsed time by finding difference (toc - tic) and
-    // dividing the difference by CLOCKS_PER_SEC to convert to seconds
-    running_time = (double)(run_now - run_start);
-    //running_time += (double)(toc - tic) / CLOCKS_PER_SEC;
+    running_time = (double) (run_now - run_start);
+	    // https://www.techiedelight.com/find-execution-time-c-program/
+	    // toc = clock();
+	    // calculate elapsed time by finding difference (toc - tic) and
+	    // dividing the difference by CLOCKS_PER_SEC to convert to seconds
+	    //running_time += (double)(toc - tic) / CLOCKS_PER_SEC;
     run_secs = running_time;
     run_days = running_time / 86400; // 86,400 =(60*60*24);
     running_time -= run_days * 86400;
@@ -836,14 +834,15 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
     running_time -= run_hours * 3600;
     run_minutes = running_time / 60;
     running_time -= run_minutes * 60;
-    move(3,133); printw("%dd %dh %dm %.1fs",run_days, run_hours, run_minutes, running_time);
-    move(4,136); printw("%.1f sec",run_secs);
+    
+    move(3,134); printw("%dd %dh %dm %.0fs",run_days, run_hours, run_minutes, running_time);
+    move(3,112); printw("Up: %11.1f sec =",run_secs);
 
-    move(3,128); printw("Up:");
-    //                   7       8         9        10        11        12
+    //move(3,128); printw("Up:");
+    //                   3       4         5         6         7         8
     //                   2345678901234567890123456789012345678901234567890
-    //                                        1234568901           123
-    move(4,52);  printw("Total DNS  Requests:             Threads:    ");
+    //                                1234568901           123
+    move(4,40);  printw("DNS Req:             Threads:    ");
     move(32,2);  printw("Status:"); 
 
 	/////////////////////////
@@ -857,7 +856,7 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
     move(8+MainThreadNumber,75);  printw("%i/%i", stats.nGood, stats.nAvail);			// Available
     move(8+MainThreadNumber,87);  printw("%i", stats.nTracked);					// tried
     move(8+MainThreadNumber,95);  printw("%i", stats.nAge);					// in sec : Age
-    move(8+MainThreadNumber,106); printw("%i", stats.nNew);					// new
+    move(8+MainThreadNumber,106); printw("%i", stats.nNew);					// New
     move(8+MainThreadNumber,113); printw("%i", stats.nAvail - stats.nTracked - stats.nNew);	// Active ( is a computed figure )
     move(8+MainThreadNumber,120); printw("%i", stats.nBanned);					// Banned
     move(8+MainThreadNumber,127); printw("%llu", (unsigned long long)requests);			// DNS Requests
@@ -887,13 +886,12 @@ extern "C" void* ThreadStats(void* _MainThreadNumber) {
     // printf("%s %i/%i available (%i tried in %is, %i new, %i active), %i banned; %llu DNS requests, %llu db queries", c, stats.nGood, stats.nAvail, stats.nTracked, stats.nAge, stats.nNew, stats.nAvail - stats.nTracked - stats.nNew, stats.nBanned, (unsigned long long)requests, (unsigned long long)queries);
     
 	
-	move(2,43);   printw("MultiChain   Node Tracker/DNS Seeder   Monitor  -"); move(2,93);  printw("%s",dnsseeder_version);
-	//move(2,48);   printw("Multiple BlockChain   Node Tracker / DNS Seeder   Monitor    -    v0.1.1.0.c\n");
-	move(5,144); printw("Threads");
+	move(2,29);   printw("MultiChain   NodeTracker/DNS Seeder   Monitor  -  v"); move(2,80);  printw("%s",dnsseeder_version);
 
 	// Section 1 - Label Fields
 	move(5,127); printw("DNS     db");
-	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name             IP               Available   tried   in sec     new    Active Banned Request Queries DNS Crawl On");
+	move(5,143); printw("Threads");
+	move(6,2);   printw("Coin   Host / Sub-Domain        Server Name             IP               Available   tried   in sec     New    Active Banned Request Queries DNS Crawl On");
 	move(7,2);   printw("-----  ------------------------ ----------------------- ---------------  ----------- ------- ---------- ------ ------ ------ ------- ------- --- ----- --");
 					   
 	//move(7-1,89+25); printw("startd");
@@ -1339,7 +1337,7 @@ extern "C" void* MainThread(void* arg) {
     //printf("done\n");
   }
   // Update number of total DNS Server threads
-  move(4,114); printw("%d",totalDNSpTh);
+  move(4,84); printw("%d",totalDNSpTh);
   
   //move(8+MainThreadNumber,95); printw("Y");
   //printf("done\n");
@@ -1419,14 +1417,10 @@ int main(int argc, char **argv) {
         return 1;
     }*/
 	
-	
   
   opts.ParseCommandLine(argc, argv); //  Check for command line arguments
   
-  
   initscr();
-  
-  
   
   ///printf("Supporting whitelisted filters: ");
   /*move(16,15);
@@ -1518,15 +1512,12 @@ int main(int argc, char **argv) {
   }
   
   
-  
-  
-  
   //below should run after main threads send sig pipe
   
 //  pthread_t threadStats, threadSeed;
   pthread_create(&threadStats, NULL, ThreadStats, /*&MainThreadNumber*/nullptr);
   //printf("Starting seeder...");
-//  pthread_create(&threadSeed, NULL, ThreadSeeder, /*&MainThreadNumber*/nullptr);
+  //pthread_create(&threadSeed, NULL, ThreadSeeder, /*&MainThreadNumber*/nullptr);
   
   for(int j=0; j<actualMainThreadCount; j++)
 	pthread_join(mainThread[j], &res);

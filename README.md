@@ -1,11 +1,13 @@
-# generic-seeder
+# generic-seeder multi-chain
 
-### v1.1.0
+### v1.1.0.multi
+
+This is multi-blokchain version of Team-Exor's generic-seeder. It can simultaneously track and serve IP's for up to 10 blockchain networks
+It relies on the nCurses library to present the display.
 
 The generic-seeder is a blockchain network crawler that maintains a list of IP addresses of the most reliable nodes on the network and shares those node IPs via DNS request to anyone requiring an entry point into the decentralized network. Choose between two main usage modes which consist of locally running a lightweight DNS server or feeding the data into a [Cloudflare](https://www.cloudflare.com/) account in order to respond to DNS seed requests. If you just want to crawl a network to get a list of the connectable nodes, without worrying about the DNS setup, you can do that too. The seeder app is compatible with almost any bitcoin-based blockchain network and can be configured in a short amount of time by filling out a small handful of parameters in the configuration file with the data from your coin's network. Tested to work with Ubuntu 18.04+ and Debian 8.x+ but it should work fine on any Linux installation, although package names and install steps may differ.
 
-This version introduces the Settings/ folder to collect pre-configured settings.conf files for different blockchains. 
-For use as a Bitmark Node Tracker / DNS Seeder, the configuration file settings.conf is provided, as well as a backup copy Settings/MARKS.settings.conf 
+This version seeks to collect pre-configured settings.conf files for up to 10 different blockchains in /usr/local/sDNS.<coin>/settings.conf 
 
 ## Table of Contents
 
@@ -42,10 +44,11 @@ Detailed set up instructions can be found in the [DNS Seeder Setup Guide](/SETUP
 
 ## Quick Setup
 
-### Step 1 - Install Prerequisites
+### Step 1 - Install Prerequisites - Libraries / Packages
 
 ```
 sudo apt-get install git build-essential libboost-all-dev libssl-dev libcurl4-openssl-dev libconfig++-dev
+sudo apt-get install ncurses-dev libncurses-dev libncurses5-dev libncursesw5-dev ncurses-doc
 ```
 
 ### Step 2 - Download Source Code
@@ -286,14 +289,7 @@ Once configured correctly, it is recommended to set up a cron job that will auto
 Need more help? Read the [DNS Seeder Setup Guide](/SETUP.md)
 
 ------------------------------------------------------------------------------------------------------------------------
-Compilation / Installation
-
-	Requirements - Libraries / Packages
-
-		apt-get install libboost-all-dev
-		apt install libcurl4-openssl-dev libconfig++-dev libssl-dev
-		apt install   ncurses-dev libncurses-dev libncurses5-dev libncursesw5-dev ncurses-doc
-		apt install libconfig++-dev
+Compilation / Installation Notes
 
 If you get this error:
 	main.cpp:21:10: fatal error: filesystem: No such file or directory
