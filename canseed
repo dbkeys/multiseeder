@@ -1,0 +1,11 @@
+#!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Please include version parameter ..."
+else
+        cp -p $1/multiseed $1/multiseed.$2
+        cp -p $1/multiseed.$2 $1/multiseed.$2.s
+        strip -p $1/multiseed.$2.s
+        cp -p $1/multiseed.$2.s /usr/local/bin
+        rm /usr/local/bin/multiseed
+        ln -s /usr/local/bin/multiseed.$2.s /usr/local/bin/multiseed
+fi
