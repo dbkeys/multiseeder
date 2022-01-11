@@ -1,6 +1,6 @@
-# generic-seeder multi-chain
+# multiseed : generic-seeder multi-chain
 
-### v1.1.0.multi
+### v0.1.1.0.multi
 
 This is a multi-blockchain version of Team-Exor's generic-seeder. It can simultaneously track and serve IP's for up to 10 blockchain networks.
 
