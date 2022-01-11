@@ -1,3 +1,7 @@
+1.1.0.multi [January 11, 2022]
+Initial multiseeder release
+-Tracks up to 10 Blockchains
+-Displays total Run-Time
 1.1.0 [January 31, 2021]
 -Add app name + app version to startup msgs
 -Updated readme layout format and verbiage improvements 
