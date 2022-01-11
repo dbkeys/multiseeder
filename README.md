@@ -2,13 +2,13 @@
 
 ### v1.1.0.multi
 
-This is multi-blokchain version of Team-Exor's generic-seeder. It can simultaneously track and serve IP's for up to 10 blockchain networks.
+This is a multi-blockchain version of Team-Exor's generic-seeder. It can simultaneously track and serve IP's for up to 10 blockchain networks.
 
-It relies on the nCurses library to present the display.
+It relies on the ncurses library to present a consistent, organized display.
 
 The generic-seeder is a blockchain network crawler that maintains a list of IP addresses of the most reliable nodes on the network and shares those node IPs via DNS request to anyone requiring an entry point into the decentralized network. Choose between two main usage modes which consist of locally running a lightweight DNS server or feeding the data into a [Cloudflare](https://www.cloudflare.com/) account in order to respond to DNS seed requests. If you just want to crawl a network to get a list of the connectable nodes, without worrying about the DNS setup, you can do that too. The seeder app is compatible with almost any bitcoin-based blockchain network and can be configured in a short amount of time by filling out a small handful of parameters in the configuration file with the data from your coin's network. Tested to work with Ubuntu 18.04+ and Debian 8.x+ but it should work fine on any Linux installation, although package names and install steps may differ.
 
-This version seeks to collect pre-configured settings.conf files for up to 10 different blockchains in /usr/local/sDNS.<coin>/settings.conf 
+This version seeks settings.conf files for up to 10 different blockchains in /usr/local/sDNS.<coin>/settings.conf 
 
 ## Table of Contents
 
@@ -78,7 +78,7 @@ cp ./settings.conf.template ./settings.conf
 make
 ```
 
-*This will produce the `dnsseed` binary*
+*This will produce the `multiseed` binary*
 
 ## Usage
 
@@ -96,29 +96,29 @@ The seeder app comes with a built-in DNS server which listens for DNS requests a
 You can now run the seeder app on the vps.example.com system using the following terminal cmd (must be run with root permissions or the DNS server will not be able to listen for and respond to requests properly):
 
 ```
-sudo ./dnsseed -h dnsseed.example.com -n vps.example.com
+sudo ./multiseed -h dnsseed.example.com -n vps.myseeder.net
 ```
 
 If you want the DNS server to report SOA records, you must provide an email address using the `-m` argument:
 
 ```
-./dnsseed -h dnsseed.example.com -n vps.example.com -m email@example.com
+./multiseed -h dnsseed.example.com -n vps.myseeder.net -m admin@myseeder.net
 ```
 
 #### Non-Root Workarounds
 
 Because non-root users cannot access ports below 1024, an extra step is required to allow you to run the DNS server (which must always use port 53) without root privileges. There are two known options for running the seeder app using a non-root user account:
 
-1. The first non-root method is to use the `setcap` command to change the capabilities of the `dnsseed` binary file to specifically allow the app to bind to a port less than 1024 (this one-time cmd requires root privileges):
+1. The first non-root method is to use the `setcap` command to change the capabilities of the `multiseed` binary file to specifically allow the app to bind to a port less than 1024 (this one-time cmd requires root privileges):
 
 ```
-sudo setcap 'cap_net_bind_service=+ep' /path/to/dnsseed
+sudo setcap 'cap_net_bind_service=+ep' /path/to/multiseed
 ```
 
 Once the `setcap` command is complete, you can start the seeder app as per normal, without the need for `sudo`:
 
 ```
-./dnsseed -h dnsseed.example.com -n vps.example.com -m email@example.com
+./multiseed -h dnsseed.example.com -n vps.example.com -m email@example.com
 ```
 
 2. The second non-root method is to add a redirect entry for port 53 in the iptables firewall system before running the seeder app as a non-root user (this one-time cmd requires root privileges):
@@ -130,7 +130,7 @@ sudo iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-port 5353
 After adding the new iptables rule, the seeder app can be called without `sudo`, but you must always specify the redirected port using the `-p` argument:
 
 ```
-./dnsseed -h dnsseed.example.com -n vps.example.com -m email@example.com -p 5353
+./multiseed -h dnsseed.example.com -n vps.example.com -m email@example.com -p 5353
 ```
 
 ### Cloudflare API Mode
@@ -157,7 +157,7 @@ cf_seed_dump="dnsseed.dump"
 Run the seeder without the need to specify any additional options:
 
 ```
-./dnsseed
+./multiseed
 ```
 
 Let the seeder app run for a few minutes until a `dnsseed.dump` file is generated, and then you can test Cloudflare mode:
@@ -209,82 +209,82 @@ Once configured correctly, it is recommended to set up a cron job that will auto
 
      Hostname of the DNS seed
 
-     Usage Example: `./dnsseed -h dnsseed.example.com`
+     Usage Example: `./multiseed -h dnsseed.example.com`
 - `-n` or `--ns`
 
      Hostname of the nameserver
 
-     Usage Example: `./dnsseed -n vps.example.com`
+     Usage Example: `./multiseed -n vps.example.com`
 - `-m` or `--mbox`
 
      E-Mail address reported in SOA records
 
-     Usage Example: `./dnsseed -m email@example.com`
+     Usage Example: `./multiseed -m email@example.com`
 - `-t` or `--threads`
 
      Number of crawlers to run in parallel (default 96)
 
-     Usage Example: `./dnsseed -t 150`
+     Usage Example: `./multiseed -t 150`
 - `-d` or `--dnsthreads`
 
      Number of DNS server threads (default 4)
 
-     Usage Example: `./dnsseed -d 10`
+     Usage Example: `./multiseed -d 10`
 - `-a` or `--address`
 
      Address to listen on (default ::)
 
-     Usage Example: `./dnsseed -a 24.45.22.148`
+     Usage Example: `./multiseed -a 24.45.22.148`
 - `-p` or `--port`
 
      UDP port to listen on (default 53)
 
-     Usage Example: `./dnsseed -p 5353`
+     Usage Example: `./multiseed -p 5353`
 - `-o` or `--onion`
 
      Tor proxy IP/Port
 
-     Usage Example: `./dnsseed -o 127.0.0.1:9150`
+     Usage Example: `./multiseed -o 127.0.0.1:9150`
 - `-i` or `--proxyipv4`
 
      IPV4 SOCKS5 proxy IP/Port
 
-     Usage Example: `./dnsseed -i 46.5.252.55:1080`
+     Usage Example: `./multiseed -i 46.5.252.55:1080`
 - `-k` or `--proxyipv6`
 
      IPV6 SOCKS5 proxy IP/Port
 
-     Usage Example: `./dnsseed -k [2620:0:6b0:a:250:56ff:fe99:78f7]:1234`
+     Usage Example: `./multiseed -k [2620:0:6b0:a:250:56ff:fe99:78f7]:1234`
 - `-w` or `--filter`
 
      Allow these flag combinations as filters
 
-     Usage Example: `./dnsseed -w 0x1,0x5,0x9,0xd,0x49,0x400`
+     Usage Example: `./multiseed -w 0x1,0x5,0x9,0xd,0x49,0x400`
 - `-f` or `--forceip`
 
      Force connections to nodes of a specific IP type<br />valid options: a = all, 4 = IPv4, 6 = IPv6 (default a)
 
-     Usage Example: `./dnsseed -f 4`
+     Usage Example: `./multiseed -f 4`
 - `--wipeban`
 
      Wipe list of banned nodes
 
-     Usage Example: `./dnsseed --wipeban`
+     Usage Example: `./multiseed --wipeban`
 - `--wipeignore`
 
      Wipe list of ignored nodes
 
-     Usage Example: `./dnsseed --wipeignore`
+     Usage Example: `./multiseed --wipeignore`
 - `--dumpall`
 
      Dump all unique nodes
 
-     Usage Example: `./dnsseed --dumpall`
+     Usage Example: `./multiseed --dumpall`
 - `-?` or `--help`
 
      Show the help text
 
-     Usage Example: `./dnsseed -?`
+     Usage Example: `./multiseed -?`
 
 ---
 Need more help? Read the [DNS Seeder Setup Guide](/SETUP.md)
