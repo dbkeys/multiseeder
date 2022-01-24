@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Assigns $2 version to multiseed bintary, creates stripped ('.s') version and copies it to /usr/local/bin
+
 if [ "$#" -ne 2 ]; then
     echo "Please include version parameter ..."
 else
@@ -6,6 +9,4 @@ else
         cp -p $1/multiseed.$2 $1/multiseed.$2.s
         strip -p $1/multiseed.$2.s
         cp -p $1/multiseed.$2.s /usr/local/bin
-        rm /usr/local/bin/multiseed
-        ln -s /usr/local/bin/multiseed.$2.s /usr/local/bin/multiseed
 fi
