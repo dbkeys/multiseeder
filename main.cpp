@@ -31,7 +31,7 @@ using namespace libconfig;
 
 // [Major].[Minor].[Patch].[Build].[letter]
 // [0].[1].[1].[0].[c]
-const char* dnsseeder_version = "0.1.1.0.multi\0x0";
+const char* dnsseeder_version = "0.1.1.1.multi.jt\0x0";
 
 
 // Service a maximum of 10 blockchains
@@ -58,7 +58,8 @@ string* coinNames[SEEDER_COUNT]={0,};
 bool fDumpAll = false;
 bool bCurrentBlockFromExplorer[SEEDER_COUNT] = {false,};
 string sAppName = "generic-seeder";
-string sAppVersion = "1.1.0";
+string sAppVersion = "0.1.1.1.multi.jt";
+//string sAppVersion = "1.1.0";
 string sForceIP;
 string sCurrentBlock[SEEDER_COUNT]= {"","","",""};
 long long int nCurrentBlock[SEEDER_COUNT] = {-1,};

@@ -6,5 +6,5 @@ if [ "$#" -ne 1 ]; then
     echo "Please include version parameter ..."
 else
         rm /usr/local/bin/multiseed
-        ln -s /usr/local/bin/multiseed.$1.s /usr/local/bin/multiseed
+        ln -s /usr/local/bin/multiseed.$1 /usr/local/bin/multiseed
 fi
